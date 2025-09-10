@@ -20,24 +20,20 @@
     height: 282px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
   }
   #pdfContainer {
     flex: 1;
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: #222;
     position: relative;
   }
-  #pdfPage {
-    max-width: 100%;
-    max-height: 100%;
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #000;
   }
   #controls {
-    width: 100%;
     height: 40px;
     display: flex;
     justify-content: space-between;
@@ -54,23 +50,26 @@
     height: 30px;
     cursor: pointer;
   }
-  #pageNumber {
-    color: #eee;
-  }
   #pdfInputContainer {
     position: absolute;
-    top: 5px;
+    top: 10px;
     left: 5px;
     right: 5px;
     display: none;
     flex-direction: row;
     gap: 5px;
+    background: #000;
+    padding: 5px;
+    border: 1px solid #555;
   }
   #pdfInputContainer input {
     flex: 1;
     height: 25px;
     font-size: 12px;
     padding: 2px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
   }
   #pdfInputContainer button {
     width: 50px;
@@ -80,104 +79,39 @@
 <body>
 <div id="app">
   <div id="pdfContainer">
-    <img id="pdfPage" src="" alt="PDF Page">
+    <iframe id="pdfFrame" src=""></iframe>
     <div id="pdfInputContainer">
-      <input type="text" id="pdfUrlInput" placeholder="Enter PDF page URL">
+      <input type="url" id="pdfUrlInput" placeholder="Enter PDF URL">
       <button id="pdfUrlAddBtn">OK</button>
     </div>
   </div>
   <div id="controls">
-    <button id="prevPage">&lt;</button>
-    <span id="pageNumber">0 / 0</span>
-    <button id="nextPage">&gt;</button>
+    <span style="flex:1;text-align:center;">Reader</span>
     <button id="addPdf">+</button>
   </div>
 </div>
 
 <script>
-let pdfPages = [];
-let currentPage = 0;
-const pdfPageEl = document.getElementById('pdfPage');
-const pageNumberEl = document.getElementById('pageNumber');
+const pdfFrame = document.getElementById('pdfFrame');
 const pdfInputContainer = document.getElementById('pdfInputContainer');
 const pdfUrlInput = document.getElementById('pdfUrlInput');
 const pdfUrlAddBtn = document.getElementById('pdfUrlAddBtn');
 
-// Load saved state
-async function loadState() {
-  if (window.creationStorage && window.creationStorage.plain) {
-    const saved = await window.creationStorage.plain.getItem('readerState');
-    if (saved) {
-      const state = JSON.parse(atob(saved));
-      pdfPages = state.pdfPages || [];
-      currentPage = state.currentPage || 0;
-      renderPage();
-    }
-  }
-}
-
-// Save current state
-async function saveState() {
-  if (window.creationStorage && window.creationStorage.plain) {
-    const state = { pdfPages, currentPage };
-    await window.creationStorage.plain.setItem('readerState', btoa(JSON.stringify(state)));
-  }
-}
-
-// Render current page
-function renderPage() {
-  if (pdfPages.length === 0) {
-    pdfPageEl.src = '';
-    pageNumberEl.textContent = `0 / 0`;
-    return;
-  }
-  pdfPageEl.src = pdfPages[currentPage];
-  pageNumberEl.textContent = `${currentPage + 1} / ${pdfPages.length}`;
-  saveState();
-}
-
-// Navigation
-function nextPage() {
-  if (currentPage < pdfPages.length - 1) currentPage++;
-  renderPage();
-}
-function prevPage() {
-  if (currentPage > 0) currentPage--;
-  renderPage();
-}
-
 // Show input bar when + is clicked
 document.getElementById('addPdf').addEventListener('click', () => {
   pdfInputContainer.style.display = 'flex';
-  pdfUrlInput.focus();
+  pdfUrlInput.focus(); // opent toetsenbord op R1
 });
 
-// Add PDF URL when OK is clicked
+// Load PDF when OK is clicked
 pdfUrlAddBtn.addEventListener('click', () => {
   const url = pdfUrlInput.value.trim();
   if (url) {
-    pdfPages.push(url);
-    currentPage = pdfPages.length - 1;
-    renderPage();
+    pdfFrame.src = url;
     pdfUrlInput.value = '';
     pdfInputContainer.style.display = 'none';
   }
 });
-
-// Hardware button support
-window.addEventListener('scrollUp', prevPage);
-window.addEventListener('scrollDown', nextPage);
-window.addEventListener('sideClick', nextPage);
-
-// PC testing
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowUp') prevPage();
-  if (e.key === 'ArrowDown') nextPage();
-  if (e.key === 'Enter') nextPage();
-});
-
-// Initialize
-loadState();
 </script>
 </body>
 </html>
