@@ -1,0 +1,12 @@
+{
+  "name": "R1 Reader Plugin",
+  "description": "Simple eReader app for R1 device",
+  "version": "1.0",
+  "author": "Gürkan",
+  "entry": "index.html",
+  "type": "web",
+  "screen": {
+    "width": 240,
+    "height": 282
+  }
+}
