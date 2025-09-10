@@ -30,6 +30,7 @@
     align-items: center;
     justify-content: center;
     background: #222;
+    position: relative;
   }
   #pdfPage {
     max-width: 100%;
@@ -56,12 +57,34 @@
   #pageNumber {
     color: #eee;
   }
+  #pdfInputContainer {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    display: none;
+    flex-direction: row;
+    gap: 5px;
+  }
+  #pdfInputContainer input {
+    flex: 1;
+    height: 25px;
+    font-size: 12px;
+    padding: 2px;
+  }
+  #pdfInputContainer button {
+    width: 50px;
+  }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="pdfContainer">
     <img id="pdfPage" src="" alt="PDF Page">
+    <div id="pdfInputContainer">
+      <input type="text" id="pdfUrlInput" placeholder="Enter PDF page URL">
+      <button id="pdfUrlAddBtn">OK</button>
+    </div>
   </div>
   <div id="controls">
     <button id="prevPage">&lt;</button>
