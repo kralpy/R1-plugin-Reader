@@ -1,110 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>R1 Reader Plugin</title>
-<meta name="viewport" content="width=240, height=282, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    color: #fff;
-    width: 240px;
-    height: 282px;
-    overflow: hidden;
-    font-family: sans-serif;
-  }
-  #pdf-viewer {
-    width: 240px;
-    height: 242px; /* rest ruimte voor de knoppen */
-    background: #111;
-  }
-  #controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 40px;
-    background: #222;
-    padding: 2px;
-  }
-  button {
-    background: #333;
-    color: #fff;
-    border: none;
-    font-size: 12px;
-    padding: 5px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  #pdfUrlInput {
-    display: none;
-    width: 100%;
-    padding: 5px;
-    font-size: 12px;
-    margin-top: 2px;
-    background: #000;
-    color: #fff;
-    border: 1px solid #444;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>R1 Reader Plugin</title>
+  <meta name="viewport" content="width=240, height=282, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 240px;
+      height: 282px;
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    #app {
+      width: 240px;
+      height: 282px;
+      display: flex;
+      flex-direction: column;
+    }
+    #toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px;
+      background: #222;
+      color: #fff;
+      font-size: 12px;
+    }
+    #pdf-viewer {
+      flex: 1;
+      background: #000;
+    }
+    button {
+      background: #333;
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    #urlInput {
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
-<div id="pdf-viewer"></div>
+  <div id="app">
+    <div id="toolbar">
+      <span id="pageInfo">Page 1</span>
+      <button id="addBtn">＋</button>
+    </div>
+    <input id="urlInput" type="text" placeholder="Enter PDF URL...">
+    <div id="pdf-viewer"></div>
+  </div>
 
-<div id="controls">
-  <button id="prevBtn">←</button>
-  <button id="nextBtn">→</button>
-  <button id="addBtn">+</button>
-</div>
+  <script async type="module">
+    import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
 
-<input type="text" id="pdfUrlInput" placeholder="Voer PDF URL in en druk Enter">
+    let viewer = null;
+    let currentPage = 1;
 
-<script async type="module">
-  import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
-
-  let viewer;
-  let currentPdf = localStorage.getItem("pdfUrl") || "https://snippet.embedpdf.com/ebook.pdf";
-
-  function loadPDF(url) {
-    document.getElementById('pdf-viewer').innerHTML = "";
-    viewer = EmbedPDF.init({
-      type: 'container',
-      target: document.getElementById('pdf-viewer'),
-      src: url
-    });
-    localStorage.setItem("pdfUrl", url);
-  }
-
-  // Eerste load
-  loadPDF(currentPdf);
-
-  // Navigatie
-  document.getElementById("prevBtn").addEventListener("click", () => {
-    if (viewer) viewer.prev();
-  });
-  document.getElementById("nextBtn").addEventListener("click", () => {
-    if (viewer) viewer.next();
-  });
-
-  // PDF URL invoeren
-  const pdfUrlInput = document.getElementById("pdfUrlInput");
-  document.getElementById("addBtn").addEventListener("click", () => {
-    pdfUrlInput.style.display = "block";
-    pdfUrlInput.focus();
-  });
-
-  pdfUrlInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      let url = pdfUrlInput.value.trim();
-      if (url && !url.startsWith("http")) {
-        url = "https://" + url; // automatisch aanvullen
-      }
-      loadPDF(url);
-      pdfUrlInput.value = "";
-      pdfUrlInput.style.display = "none";
+    function loadPDF(url) {
+      viewer = EmbedPDF.init({
+        type: 'container',
+        target: document.getElementById('pdf-viewer'),
+        src: url
+      });
+      viewer.on('pagechange', (e) => {
+        currentPage = e.pageNumber;
+        document.getElementById('pageInfo').textContent = `Page ${currentPage}`;
+      });
     }
-  });
-</script>
+
+    // Start met voorbeeld PDF
+    loadPDF("https://snippet.embedpdf.com/ebook.pdf");
+
+    const addBtn = document.getElementById("addBtn");
+    const urlInput = document.getElementById("urlInput");
+
+    addBtn.addEventListener("click", () => {
+      urlInput.style.display = "block";
+      urlInput.focus();
+    });
+
+    urlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        let url = urlInput.value.trim();
+        if (!url.startsWith("http")) {
+          url = "https://" + url;
+        }
+        loadPDF(url);
+        urlInput.style.display = "none";
+        urlInput.value = "";
+      }
+    });
+
+    // Scroll wheel mapping op de R1
+    window.addEventListener("scrollUp", () => {
+      if (viewer) viewer.prev();
+    });
+    window.addEventListener("scrollDown", () => {
+      if (viewer) viewer.next();
+    });
+
+    // PC test: pijltjes toetsen
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") window.dispatchEvent(new Event("scrollUp"));
+      if (e.key === "ArrowDown") window.dispatchEvent(new Event("scrollDown"));
+    });
+  </script>
 </body>
 </html>
