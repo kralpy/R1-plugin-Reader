@@ -104,10 +104,19 @@ document.getElementById('addPdf').addEventListener('click', () => {
   pdfUrlInput.focus(); // opent toetsenbord op R1
 });
 
+// Normalize URL (add https:// if missing)
+function normalizeUrl(url) {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    return "https://" + url;
+  }
+  return url;
+}
+
 // Load PDF via Google Docs Viewer
 pdfUrlAddBtn.addEventListener('click', () => {
-  const url = pdfUrlInput.value.trim();
+  let url = pdfUrlInput.value.trim();
   if (url) {
+    url = normalizeUrl(url);
     pdfFrame.src = "https://docs.google.com/gview?embedded=true&url=" + encodeURIComponent(url);
     pdfUrlInput.value = '';
     pdfInputContainer.style.display = 'none';
