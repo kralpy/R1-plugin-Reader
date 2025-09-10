@@ -5,123 +5,106 @@
 <title>R1 Reader Plugin</title>
 <meta name="viewport" content="width=240, height=282, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-  html, body {
+  body {
     margin: 0;
     padding: 0;
-    width: 240px;
-    height: 282px;
-    background: #111;
-    color: #eee;
-    font-family: sans-serif;
-    overflow: hidden;
-  }
-  #app {
-    width: 240px;
-    height: 282px;
-    display: flex;
-    flex-direction: column;
-  }
-  #pdfContainer {
-    flex: 1;
-    width: 100%;
-    background: #222;
-    position: relative;
-  }
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
     background: #000;
+    color: #fff;
+    width: 240px;
+    height: 282px;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+  #pdf-viewer {
+    width: 240px;
+    height: 242px; /* rest ruimte voor de knoppen */
+    background: #111;
   }
   #controls {
-    height: 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #333;
-    padding: 0 5px;
+    height: 40px;
+    background: #222;
+    padding: 2px;
   }
   button {
-    background: #444;
+    background: #333;
+    color: #fff;
     border: none;
-    color: #eee;
-    font-size: 14px;
-    width: 40px;
-    height: 30px;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 4px;
     cursor: pointer;
   }
-  #pdfInputContainer {
-    position: absolute;
-    top: 10px;
-    left: 5px;
-    right: 5px;
+  #pdfUrlInput {
     display: none;
-    flex-direction: row;
-    gap: 5px;
-    background: #000;
+    width: 100%;
     padding: 5px;
-    border: 1px solid #555;
-    z-index: 10;
-  }
-  #pdfInputContainer input {
-    flex: 1;
-    height: 25px;
     font-size: 12px;
-    padding: 2px;
-    background: #222;
+    margin-top: 2px;
+    background: #000;
     color: #fff;
-    border: 1px solid #555;
-  }
-  #pdfInputContainer button {
-    width: 50px;
+    border: 1px solid #444;
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="pdfContainer">
-    <iframe id="pdfFrame" src=""></iframe>
-    <div id="pdfInputContainer">
-      <input type="url" id="pdfUrlInput" placeholder="Enter PDF URL">
-      <button id="pdfUrlAddBtn">OK</button>
-    </div>
-  </div>
-  <div id="controls">
-    <span style="flex:1;text-align:center;">Reader</span>
-    <button id="addPdf">+</button>
-  </div>
+<div id="pdf-viewer"></div>
+
+<div id="controls">
+  <button id="prevBtn">←</button>
+  <button id="nextBtn">→</button>
+  <button id="addBtn">+</button>
 </div>
 
-<script>
-const pdfFrame = document.getElementById('pdfFrame');
-const pdfInputContainer = document.getElementById('pdfInputContainer');
-const pdfUrlInput = document.getElementById('pdfUrlInput');
-const pdfUrlAddBtn = document.getElementById('pdfUrlAddBtn');
+<input type="text" id="pdfUrlInput" placeholder="Voer PDF URL in en druk Enter">
 
-// Show input bar when + is clicked
-document.getElementById('addPdf').addEventListener('click', () => {
-  pdfInputContainer.style.display = 'flex';
-  pdfUrlInput.focus(); // opent toetsenbord op R1
-});
+<script async type="module">
+  import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
 
-// Normalize URL (add https:// if missing)
-function normalizeUrl(url) {
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return "https://" + url;
+  let viewer;
+  let currentPdf = localStorage.getItem("pdfUrl") || "https://snippet.embedpdf.com/ebook.pdf";
+
+  function loadPDF(url) {
+    document.getElementById('pdf-viewer').innerHTML = "";
+    viewer = EmbedPDF.init({
+      type: 'container',
+      target: document.getElementById('pdf-viewer'),
+      src: url
+    });
+    localStorage.setItem("pdfUrl", url);
   }
-  return url;
-}
 
-// Load PDF via Google Docs Viewer
-pdfUrlAddBtn.addEventListener('click', () => {
-  let url = pdfUrlInput.value.trim();
-  if (url) {
-    url = normalizeUrl(url);
-    pdfFrame.src = "https://docs.google.com/gview?embedded=true&url=" + encodeURIComponent(url);
-    pdfUrlInput.value = '';
-    pdfInputContainer.style.display = 'none';
-  }
-});
+  // Eerste load
+  loadPDF(currentPdf);
+
+  // Navigatie
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (viewer) viewer.prev();
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (viewer) viewer.next();
+  });
+
+  // PDF URL invoeren
+  const pdfUrlInput = document.getElementById("pdfUrlInput");
+  document.getElementById("addBtn").addEventListener("click", () => {
+    pdfUrlInput.style.display = "block";
+    pdfUrlInput.focus();
+  });
+
+  pdfUrlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      let url = pdfUrlInput.value.trim();
+      if (url && !url.startsWith("http")) {
+        url = "https://" + url; // automatisch aanvullen
+      }
+      loadPDF(url);
+      pdfUrlInput.value = "";
+      pdfUrlInput.style.display = "none";
+    }
+  });
 </script>
 </body>
 </html>
